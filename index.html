@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#030712">
+  <title>WORKFORCE TACTICAL PASS | بطاقة الامتثال المهني</title>
+
+  <!-- Tailwind & Icons -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+  
+  <!-- مكتبة الباركود الرقمي -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <style>
+    :root {
+      --primary-gold: #d4af37;
+      --card-bg: rgba(15, 23, 42, 0.9);
+      --hud-border: rgba(212, 175, 55, 0.18);
+    }
+    * { font-family: 'Tajawal', sans-serif; -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    .mono-data { font-family: 'Space Grotesk', monospace; }
+    
+    body {
+      background-color: #030712;
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.08) 0%, transparent 50%),
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 28px 28px, 28px 28px;
+    }
+
+    .hud-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--hud-border);
+      box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.7);
+    }
+
+    .gold-action-btn {
+      background: linear-gradient(135deg, #d4af37 0%, #a67c1e 100%);
+      box-shadow: 0 4px 18px rgba(212, 175, 55, 0.25);
+    }
+  </style>
+</head>
+<body class="text-slate-200 min-h-screen pb-20 select-none">
+
+  <!-- HUD Top Bar -->
+  <header class="sticky top-0 z-40 bg-[#030712]/95 backdrop-blur-md border-b border-amber-500/20 px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+        <i class="fa-solid fa-id-badge text-sm"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-white tracking-wide" id="companyHeaderName">مؤسسة النمر التجارية</span>
+          <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">نظامي</span>
+        </div>
+        <p class="text-[10px] text-slate-500 font-mono tracking-wider">WORKFORCE COMPLIANCE HUD</p>
+      </div>
+    </div>
+
+    <button onclick="editComplianceDates()" class="text-[11px] px-2.5 py-1.5 rounded-lg hud-card border border-amber-500/30 text-amber-300 flex items-center gap-1 active:scale-95 transition">
+      <i class="fa-solid fa-pen-to-square text-xs"></i>
+      <span>تحديث التواريخ</span>
+    </button>
+  </header>
+
+  <main class="p-4 max-w-md mx-auto space-y-4">
+
+    <!-- 1. بطاقة الهوية الأساسية للعامل (Identity Header) -->
+    <section class="hud-card p-5 rounded-3xl relative overflow-hidden border-amber-500/30">
+      <div class="flex items-start gap-4">
+        <!-- صورة العامل الشخصية -->
+        <div class="relative">
+          <div class="w-20 h-24 rounded-2xl bg-slate-900 border border-amber-500/40 overflow-hidden flex items-center justify-center cursor-pointer" onclick="triggerDocUpload('workerPhotoInput')">
+            <img id="workerPhotoImg" src="" alt="العامل" class="hidden w-full h-full object-cover">
+            <div id="workerPhotoPlaceholder" class="flex flex-col items-center text-center p-1">
+              <i class="fa-solid fa-user text-xl text-amber-400/50 mb-1"></i>
+              <span class="text-[8px] text-slate-400">رفع صورة شخصية</span>
+            </div>
+          </div>
+          <input type="file" id="workerPhotoInput" accept="image/*" class="hidden" onchange="handleDocImage(event, 'worker_photo')">
+        </div>
+
+        <!-- تفاصيل العامل الوظيفية -->
+        <div class="flex-1 space-y-1">
+          <span class="text-[10px] text-amber-400 font-mono tracking-wider block" id="workerIdBadge">EMP-0418</span>
+          <h1 class="text-base font-bold text-white leading-snug" id="workerName">محمد شاهين علم</h1>
+          <p class="text-xs text-slate-300 font-medium" id="workerJob">فني تمديدات كهربائية</p>
+          <div class="flex items-center gap-2 pt-1 text-[11px] text-slate-400 font-mono">
+            <span>الجنسية: <strong class="text-white font-sans" id="workerNationality">هندي</strong></span>
+            <span>•</span>
+            <span>الديانة: <strong class="text-white font-sans" id="workerReligion">مسلم</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- خانات الأرقام الحكومية السريعة (إقامة / حدود / جواز) -->
+      <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-white/5 text-center">
+        <div class="bg-black/40 p-2 rounded-xl">
+          <span class="text-[9px] text-slate-400 block">رقم الإقامة</span>
+          <span class="mono-data text-xs font-bold text-white block mt-0.5" id="iqamaNumber">2489110293</span>
+          <button onclick="copyData(document.getElementById('iqamaNumber').textContent, 'تم نسخ رقم الإقامة')" class="text-[9px] text-amber-400 mt-1 hover:text-white">
+            <i class="fa-regular fa-copy"></i> نسخ
+          </button>
+        </div>
+
+        <div class="bg-black/40 p-2 rounded-xl">
+          <span class="text-[9px] text-slate-400 block">رقم الحدود</span>
+          <span class="mono-data text-xs font-bold text-white block mt-0.5" id="borderNumber">3089410291</span>
+          <button onclick="copyData(document.getElementById('borderNumber').textContent, 'تم نسخ رقم الحدود')" class="text-[9px] text-amber-400 mt-1 hover:text-white">
+            <i class="fa-regular fa-copy"></i> نسخ
+          </button>
+        </div>
+
+        <div class="bg-black/40 p-2 rounded-xl">
+          <span class="text-[9px] text-slate-400 block">رقم الجواز</span>
+          <span class="mono-data text-xs font-bold text-white block mt-0.5" id="passportNumber">Z5901244</span>
+          <button onclick="copyData(document.getElementById('passportNumber').textContent, 'تم نسخ رقم الجواز')" class="text-[9px] text-amber-400 mt-1 hover:text-white">
+            <i class="fa-regular fa-copy"></i> نسخ
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. رادار الامتثال والصلاحيات (Compliance Radar) -->
+    <section class="hud-card p-5 rounded-3xl space-y-3">
+      <div class="flex justify-between items-center text-xs">
+        <span class="font-bold text-amber-400 flex items-center gap-1.5">
+          <i class="fa-solid fa-shield-halved"></i> رادار الامتثال وتفادي الغرامات (Live Radar)
+        </span>
+        <span class="text-[9px] text-slate-400 font-mono">GOV MONITOR</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2.5">
+        <!-- 1. هوية مقيم (أبشر أعمال / مقيم) -->
+        <div class="bg-black/40 p-3.5 rounded-2xl border border-white/5 space-y-1">
+          <div class="flex justify-between items-center text-[10px] text-slate-400">
+            <span>هوية مقيم</span>
+            <i class="fa-solid fa-address-card text-emerald-400 text-xs"></i>
+          </div>
+          <div class="mono-data text-lg font-black text-white" id="iqamaDaysLeft">-- <span class="text-[10px] font-normal text-slate-400">يوم</span></div>
+          <div class="text-[9px] font-mono" id="iqamaStatusBadge">جاري الحساب...</div>
+          <div class="text-[9px] text-slate-500 truncate" id="iqamaDateLabel">تنتهي: --</div>
+        </div>
+
+        <!-- 2. رخصة العمل (منصة قوى) -->
+        <div class="bg-black/40 p-3.5 rounded-2xl border border-white/5 space-y-1">
+          <div class="flex justify-between items-center text-[10px] text-slate-400">
+            <span>رخصة العمل (قوى)</span>
+            <i class="fa-solid fa-briefcase text-blue-400 text-xs"></i>
+          </div>
+          <div class="mono-data text-lg font-black text-white" id="qiwaDaysLeft">-- <span class="text-[10px] font-normal text-slate-400">يوم</span></div>
+          <div class="text-[9px] font-mono" id="qiwaStatusBadge">جاري الحساب...</div>
+          <div class="text-[9px] text-slate-500 truncate" id="qiwaDateLabel">تنتهي: --</div>
+        </div>
+
+        <!-- 3. التأمين الطبي (CCHI) -->
+        <div class="bg-black/40 p-3.5 rounded-2xl border border-white/5 space-y-1">
+          <div class="flex justify-between items-center text-[10px] text-slate-400">
+            <span>التأمين الطبي</span>
+            <i class="fa-solid fa-heart-pulse text-rose-400 text-xs"></i>
+          </div>
+          <div class="mono-data text-lg font-black text-white" id="cchiDaysLeft">-- <span class="text-[10px] font-normal text-slate-400">يوم</span></div>
+          <div class="text-[9px] font-mono" id="cchiStatusBadge">جاري الحساب...</div>
+          <div class="text-[9px] text-slate-500 truncate" id="cchiDateLabel">تنتهي: --</div>
+        </div>
+
+        <!-- 4. صلاحية جواز السفر -->
+        <div class="bg-black/40 p-3.5 rounded-2xl border border-white/5 space-y-1">
+          <div class="flex justify-between items-center text-[10px] text-slate-400">
+            <span>جواز السفر</span>
+            <i class="fa-solid fa-passport text-amber-400 text-xs"></i>
+          </div>
+          <div class="mono-data text-lg font-black text-white" id="passDaysLeft">-- <span class="text-[10px] font-normal text-slate-400">يوم</span></div>
+          <div class="text-[9px] font-mono" id="passStatusBadge">جاري الحساب...</div>
+          <div class="text-[9px] text-slate-500 truncate" id="passDateLabel">تنتهي: --</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. باركود التحقق الرقمي السريع للمفتشين (Quick Inspector Pass) -->
+    <section class="hud-card p-4 rounded-3xl text-center space-y-2 border-emerald-500/20">
+      <div class="flex justify-between items-center text-xs">
+        <span class="font-bold text-slate-200 flex items-center gap-1.5">
+          <i class="fa-solid fa-qrcode text-emerald-400"></i> باركود التفتيش والتحقق الميداني
+        </span>
+        <span class="text-[9px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono">READY TO SCAN</span>
+      </div>
+
+      <div class="p-3 bg-white rounded-2xl inline-block shadow-xl cursor-pointer" onclick="zoomQRCode()" title="اضغط للتكبير">
+        <div id="inspectorQrContainer"></div>
+      </div>
+      <p class="text-[9px] text-slate-400 font-mono" id="qrDataSummary">VERIFIED DATA PASS</p>
+    </section>
+
+    <!-- 4. الخزنة البصرية للوثائق الأصلية (Inspection Document Vault) -->
+    <section class="hud-card p-5 rounded-3xl space-y-3">
+      <div class="flex justify-between items-center text-xs">
+        <span class="font-bold text-amber-400 flex items-center gap-1.5">
+          <i class="fa-solid fa-folder-open"></i> وثائق العامل الأصلية (حفظ ومعاينة)
+        </span>
+        <span class="text-[9px] text-slate-500">حفظ مشفر محلياً</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2.5">
+        <!-- 1. هوية مقيم -->
+        <div class="bg-black/40 p-3 rounded-2xl border border-white/5 space-y-1.5 text-center">
+          <span class="text-[10px] font-bold text-slate-300 block text-right">هوية مقيم (الإقامة)</span>
+          <div id="iqamaPreviewContainer" class="w-full h-24 rounded-xl bg-slate-900 border border-dashed border-slate-700 flex flex-col items-center justify-center cursor-pointer overflow-hidden relative" onclick="triggerDocUpload('iqamaInput')">
+            <img id="iqamaImg" src="" alt="الإقامة" class="hidden w-full h-full object-cover">
+            <div id="iqamaPlaceholder" class="flex flex-col items-center">
+              <i class="fa-solid fa-id-card text-lg text-emerald-400/60 mb-1"></i>
+              <span class="text-[8px] text-slate-500">رفع هوية مقيم</span>
+            </div>
+          </div>
+          <input type="file" id="iqamaInput" accept="image/*" class="hidden" onchange="handleDocImage(event, 'iqama')">
+          <div id="iqamaActions" class="hidden flex justify-between pt-1 text-[10px]">
+            <button onclick="viewFullScreen('iqama')" class="text-amber-400 font-bold"><i class="fa-solid fa-expand"></i> تكبير</button>
+            <button onclick="removeDocImage('iqama')" class="text-rose-400"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+
+        <!-- 2. رخصة العمل قوى -->
+        <div class="bg-black/40 p-3 rounded-2xl border border-white/5 space-y-1.5 text-center">
+          <span class="text-[10px] font-bold text-slate-300 block text-right">رخصة العمل (قوى)</span>
+          <div id="qiwaPreviewContainer" class="w-full h-24 rounded-xl bg-slate-900 border border-dashed border-slate-700 flex flex-col items-center justify-center cursor-pointer overflow-hidden relative" onclick="triggerDocUpload('qiwaInput')">
+            <img id="qiwaImg" src="" alt="رخصة العمل" class="hidden w-full h-full object-cover">
+            <div id="qiwaPlaceholder" class="flex flex-col items-center">
+              <i class="fa-solid fa-file-contract text-lg text-blue-400/60 mb-1"></i>
+              <span class="text-[8px] text-slate-500">رفع رخصة قوى</span>
+            </div>
+          </div>
+          <input type="file" id="qiwaInput" accept="image/*" class="hidden" onchange="handleDocImage(event, 'qiwa')">
+          <div id="qiwaActions" class="hidden flex justify-between pt-1 text-[10px]">
+            <button onclick="viewFullScreen('qiwa')" class="text-amber-400 font-bold"><i class="fa-solid fa-expand"></i> تكبير</button>
+            <button onclick="removeDocImage('qiwa')" class="text-rose-400"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+
+        <!-- 3. صورة الجواز -->
+        <div class="bg-black/40 p-3 rounded-2xl border border-white/5 space-y-1.5 text-center">
+          <span class="text-[10px] font-bold text-slate-300 block text-right">جواز السفر</span>
+          <div id="passPreviewContainer" class="w-full h-24 rounded-xl bg-slate-900 border border-dashed border-slate-700 flex flex-col items-center justify-center cursor-pointer overflow-hidden relative" onclick="triggerDocUpload('passInput')">
+            <img id="passImg" src="" alt="الجواز" class="hidden w-full h-full object-cover">
+            <div id="passPlaceholder" class="flex flex-col items-center">
+              <i class="fa-solid fa-passport text-lg text-amber-400/60 mb-1"></i>
+              <span class="text-[8px] text-slate-500">رفع الجواز</span>
+            </div>
+          </div>
+          <input type="file" id="passInput" accept="image/*" class="hidden" onchange="handleDocImage(event, 'pass')">
+          <div id="passActions" class="hidden flex justify-between pt-1 text-[10px]">
+            <button onclick="viewFullScreen('pass')" class="text-amber-400 font-bold"><i class="fa-solid fa-expand"></i> تكبير</button>
+            <button onclick="removeDocImage('pass')" class="text-rose-400"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+
+        <!-- 4. بطاقة التأمين الطبي -->
+        <div class="bg-black/40 p-3 rounded-2xl border border-white/5 space-y-1.5 text-center">
+          <span class="text-[10px] font-bold text-slate-300 block text-right">شهادة التأمين الطبي</span>
+          <div id="cchiPreviewContainer" class="w-full h-24 rounded-xl bg-slate-900 border border-dashed border-slate-700 flex flex-col items-center justify-center cursor-pointer overflow-hidden relative" onclick="triggerDocUpload('cchiInput')">
+            <img id="cchiImg" src="" alt="التأمين" class="hidden w-full h-full object-cover">
+            <div id="cchiPlaceholder" class="flex flex-col items-center">
+              <i class="fa-solid fa-file-medical text-lg text-rose-400/60 mb-1"></i>
+              <span class="text-[8px] text-slate-500">رفع التأمين</span>
+            </div>
+          </div>
+          <input type="file" id="cchiInput" accept="image/*" class="hidden" onchange="handleDocImage(event, 'cchi')">
+          <div id="cchiActions" class="hidden flex justify-between pt-1 text-[10px]">
+            <button onclick="viewFullScreen('cchi')" class="text-amber-400 font-bold"><i class="fa-solid fa-expand"></i> تكبير</button>
+            <button onclick="removeDocImage('cchi')" class="text-rose-400"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. بيانات المنشأة ومسؤول الاتصال الميداني (Sponsor & Site Supervisor) -->
+    <section class="hud-card p-5 rounded-3xl space-y-3 border-amber-500/20">
+      <div class="flex justify-between items-center text-xs">
+        <span class="font-bold text-slate-200 flex items-center gap-1.5">
+          <i class="fa-solid fa-building text-amber-400"></i> بيانات صاحب العمل والمنشأة
+        </span>
+        <span class="text-[9px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 font-mono" id="unifiedNumber">700XXXXXXXX</span>
+      </div>
+
+      <div class="bg-black/40 p-3 rounded-2xl border border-white/5 space-y-1 text-xs">
+        <div class="flex justify-between"><span class="text-slate-400">المنشأة:</span> <strong class="text-white" id="companyFullTitle">مؤسسة النمر للمقاولات والتجارة</strong></div>
+        <div class="flex justify-between"><span class="text-slate-400">السجل التجاري:</span> <span class="mono-data text-amber-300" id="crNumber">1010XXXXXX</span></div>
+        <div class="flex justify-between"><span class="text-slate-400">مشرف الموقع (HR):</span> <span class="text-white" id="supervisorName">م. فهد القحطاني</span></div>
+        <div class="flex justify-between"><span class="text-slate-400">موقع المشروع / الفرع:</span> <span class="text-white" id="workLocation">مشروع حي النرجس، الرياض</span></div>
+      </div>
+
+      <!-- أزرار الاتصال بالمشرف أو المنشأة -->
+      <div class="grid grid-cols-2 gap-2 pt-1">
+        <a id="callSupervisorBtn" href="tel:+966502777884" class="gold-action-btn text-black py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition">
+          <i class="fa-solid fa-phone"></i> اتصال بالمشرف
+        </a>
+        <a id="whatsappSupervisorBtn" href="https://wa.me/966502777884?text=استفسار بخصوص العامل محمد شاهين علم - إقامة: 2489110293" target="_blank" class="hud-card text-white py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:border-emerald-500/40 transition">
+          <i class="fa-brands fa-whatsapp text-emerald-400"></i> مراسلة المنشأة
+        </a>
+      </div>
+    </section>
+
+    <!-- 6. روابط التحقق الحكومية المباشرة (Qiwa, Muqeem, CCHI) -->
+    <section class="grid grid-cols-3 gap-2">
+      <a href="https://qiwa.sa" target="_blank" class="hud-card p-2.5 rounded-2xl text-center hover:border-blue-500/40 transition">
+        <i class="fa-solid fa-briefcase text-blue-400 text-sm"></i>
+        <span class="block text-[10px] font-bold text-white mt-1">منصة قوى</span>
+        <span class="text-[8px] text-slate-400 font-mono">QIWA.SA</span>
+      </a>
+      <a href="https://muqeem.sa" target="_blank" class="hud-card p-2.5 rounded-2xl text-center hover:border-emerald-500/40 transition">
+        <i class="fa-solid fa-passport text-emerald-400 text-sm"></i>
+        <span class="block text-[10px] font-bold text-white mt-1">منصة مقيم</span>
+        <span class="text-[8px] text-slate-400 font-mono">MUQEEM.SA</span>
+      </a>
+      <a href="https://eservices.cchi.gov.sa" target="_blank" class="hud-card p-2.5 rounded-2xl text-center hover:border-rose-500/40 transition">
+        <i class="fa-solid fa-heart-pulse text-rose-400 text-sm"></i>
+        <span class="block text-[10px] font-bold text-white mt-1">الضمان الصحي</span>
+        <span class="text-[8px] text-slate-400 font-mono">CCHI.GOV</span>
+      </a>
+    </section>
+
+  </main>
+
+  <!-- نافذة تكبير الوثائق بملء الشاشة للمفتشين -->
+  <div id="fullScreenViewer" class="hidden fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center p-4">
+    <button onclick="closeFullScreen()" class="absolute top-5 right-5 text-white text-lg bg-slate-800/80 w-10 h-10 rounded-full flex items-center justify-center border border-white/20">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+    <div class="flex flex-col items-center">
+      <img id="fullScreenImg" src="" class="max-w-full max-h-[85vh] object-contain rounded-2xl border border-amber-500/30">
+    </div>
+    <div id="fullScreenLabel" class="text-xs font-mono text-amber-400 mt-3 tracking-wider">OFFICIAL DOCUMENT VIEWER</div>
+  </div>
+
+  <script>
+    // ========================================================
+    // ⚙️ إعدادات العامل والمنشأة الافتراضية (DEFAULT WORKER)
+    // ========================================================
+    const DEFAULT_WORKER = {
+      name: "محمد شاهين علم",
+      job: "فني تمديدات كهربائية",
+      empCode: "EMP-0418",
+      nationality: "هندي",
+      religion: "مسلم",
+      iqama: "2489110293",
+      border: "3089410291",
+      passport: "Z5901244",
+      company: "مؤسسة النمر التجارية",
+      companyFull: "مؤسسة النمر للمقاولات والتجارة",
+      cr: "1010892019",
+      unified700: "7009841203",
+      supervisor: "م. فهد القحطاني",
+      supervisorPhone: "+966502777884",
+      location: "مشروع حي النرجس، الرياض",
+      iqamaExp: "2027-09-15",
+      qiwaExp: "2027-05-10",
+      cchiExp: "2027-08-20",
+      passExp: "2028-11-30"
+    };
+
+    let ACTIVE_WORKER = { ...DEFAULT_WORKER };
+
+    // محرك استخراج البيانات التلقائي من رابط الـ NFC
+    function loadWorkerFromURL() {
+      const p = new URLSearchParams(window.location.search);
+      if (p.has('name')) ACTIVE_WORKER.name = p.get('name');
+      if (p.has('job')) ACTIVE_WORKER.job = p.get('job');
+      if (p.has('empCode')) ACTIVE_WORKER.empCode = p.get('empCode');
+      if (p.has('nationality')) ACTIVE_WORKER.nationality = p.get('nationality');
+      if (p.has('iqama')) ACTIVE_WORKER.iqama = p.get('iqama');
+      if (p.has('border')) ACTIVE_WORKER.border = p.get('border');
+      if (p.has('passport')) ACTIVE_WORKER.passport = p.get('passport');
+      
+      if (p.has('company')) ACTIVE_WORKER.company = p.get('company');
+      if (p.has('cr')) ACTIVE_WORKER.cr = p.get('cr');
+      if (p.has('u700')) ACTIVE_WORKER.unified700 = p.get('u700');
+      if (p.has('supName')) ACTIVE_WORKER.supervisor = p.get('supName');
+      if (p.has('supPhone')) ACTIVE_WORKER.supervisorPhone = p.get('supPhone');
+      if (p.has('loc')) ACTIVE_WORKER.location = p.get('loc');
+
+      if (p.has('iqamaExp')) ACTIVE_WORKER.iqamaExp = p.get('iqamaExp');
+      if (p.has('qiwaExp')) ACTIVE_WORKER.qiwaExp = p.get('qiwaExp');
+      if (p.has('cchiExp')) ACTIVE_WORKER.cchiExp = p.get('cchiExp');
+      if (p.has('passExp')) ACTIVE_WORKER.passExp = p.get('passExp');
+    }
+
+    // حقن البيانات في عناصر الصفحة
+    function renderWorkerProfile() {
+      document.getElementById('companyHeaderName').textContent = ACTIVE_WORKER.company;
+      document.getElementById('workerName').textContent = ACTIVE_WORKER.name;
+      document.getElementById('workerJob').textContent = ACTIVE_WORKER.job;
+      document.getElementById('workerIdBadge').textContent = ACTIVE_WORKER.empCode;
+      document.getElementById('workerNationality').textContent = ACTIVE_WORKER.nationality;
+      document.getElementById('workerReligion').textContent = ACTIVE_WORKER.religion;
+
+      document.getElementById('iqamaNumber').textContent = ACTIVE_WORKER.iqama;
+      document.getElementById('borderNumber').textContent = ACTIVE_WORKER.border;
+      document.getElementById('passportNumber').textContent = ACTIVE_WORKER.passport;
+
+      document.getElementById('companyFullTitle').textContent = ACTIVE_WORKER.companyFull;
+      document.getElementById('crNumber').textContent = ACTIVE_WORKER.cr;
+      document.getElementById('unifiedNumber').textContent = `700: ${ACTIVE_WORKER.unified700}`;
+      document.getElementById('supervisorName').textContent = ACTIVE_WORKER.supervisor;
+      document.getElementById('workLocation').textContent = ACTIVE_WORKER.location;
+
+      const cleanPhone = ACTIVE_WORKER.supervisorPhone.replace(/[^0-9]/g, '');
+      document.getElementById('callSupervisorBtn').href = `tel:${ACTIVE_WORKER.supervisorPhone}`;
+      document.getElementById('whatsappSupervisorBtn').href = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(`استفسار بخصوص العامل: ${ACTIVE_WORKER.name} | رقم الإقامة: ${ACTIVE_WORKER.iqama}`)}`;
+
+      calculateAllComplianceDates();
+      generateInspectorQR();
+    }
+
+    // حساب ومراقبة الأيام المتبقية
+    function calculateDays(targetDateStr) {
+      if (!targetDateStr) return null;
+      const target = new Date(targetDateStr);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      target.setHours(0, 0, 0, 0);
+      return Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+    }
+
+    function calculateAllComplianceDates() {
+      const dates = {
+        iqama: localStorage.getItem('worker_iqama_exp') || ACTIVE_WORKER.iqamaExp,
+        qiwa: localStorage.getItem('worker_qiwa_exp') || ACTIVE_WORKER.qiwaExp,
+        cchi: localStorage.getItem('worker_cchi_exp') || ACTIVE_WORKER.cchiExp,
+        pass: localStorage.getItem('worker_pass_exp') || ACTIVE_WORKER.passExp
+      };
+
+      const metrics = [
+        { key: 'iqama', title: 'الإقامة' },
+        { key: 'qiwa', title: 'قوى' },
+        { key: 'cchi', title: 'التأمين' },
+        { key: 'pass', title: 'الجواز' }
+      ];
+
+      metrics.forEach(m => {
+        const days = calculateDays(dates[m.key]);
+        const daysEl = document.getElementById(`${m.key}DaysLeft`);
+        const badgeEl = document.getElementById(`${m.key}StatusBadge`);
+        const labelEl = document.getElementById(`${m.key}DateLabel`);
+
+        labelEl.textContent = `تنتهي: ${dates[m.key]}`;
+
+        if (days !== null) {
+          if (days > 45) {
+            daysEl.innerHTML = `${days} <span class="text-[10px] font-normal text-slate-400">يوم</span>`;
+            badgeEl.textContent = 'نظامي وسارٍ';
+            badgeEl.className = 'text-[9px] font-mono text-emerald-400';
+          } else if (days > 0) {
+            daysEl.innerHTML = `${days} <span class="text-[10px] font-normal text-slate-400">يوم</span>`;
+            badgeEl.textContent = 'قريب الانتهاء (تجديد)';
+            badgeEl.className = 'text-[9px] font-mono text-amber-400';
+          } else {
+            daysEl.innerHTML = `منتهي`;
+            badgeEl.textContent = 'منتهي (يلزم السداد فوراً)';
+            badgeEl.className = 'text-[9px] font-mono text-rose-500 font-bold';
+          }
+        }
+      });
+    }
+
+    function editComplianceDates() {
+      const curIqama = localStorage.getItem('worker_iqama_exp') || ACTIVE_WORKER.iqamaExp;
+      const curQiwa = localStorage.getItem('worker_qiwa_exp') || ACTIVE_WORKER.qiwaExp;
+      const curCchi = localStorage.getItem('worker_cchi_exp') || ACTIVE_WORKER.cchiExp;
+      const curPass = localStorage.getItem('worker_pass_exp') || ACTIVE_WORKER.passExp;
+
+      const nIqama = prompt('تاريخ انتهاء الإقامة (YYYY-MM-DD):', curIqama);
+      if (nIqama) localStorage.setItem('worker_iqama_exp', nIqama);
+
+      const nQiwa = prompt('تاريخ انتهاء رخصة العمل قوى (YYYY-MM-DD):', curQiwa);
+      if (nQiwa) localStorage.setItem('worker_qiwa_exp', nQiwa);
+
+      const nCchi = prompt('تاريخ انتهاء التأمين الطبي (YYYY-MM-DD):', curCchi);
+      if (nCchi) localStorage.setItem('worker_cchi_exp', nCchi);
+
+      const nPass = prompt('تاريخ انتهاء الجواز (YYYY-MM-DD):', curPass);
+      if (nPass) localStorage.setItem('worker_pass_exp', nPass);
+
+      calculateAllComplianceDates();
+    }
+
+    // توليد باركود التفتيش والتحقق الميداني
+    function generateInspectorQR() {
+      const container = document.getElementById('inspectorQrContainer');
+      container.innerHTML = '';
+      
+      const qrPayload = `WORKER:${ACTIVE_WORKER.name}|IQAMA:${ACTIVE_WORKER.iqama}|BORDER:${ACTIVE_WORKER.border}|CR:${ACTIVE_WORKER.cr}|U700:${ACTIVE_WORKER.unified700}`;
+      
+      new QRCode(container, {
+        text: qrPayload,
+        width: 140,
+        height: 140,
+        colorDark: "#030712",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+      document.getElementById('qrDataSummary').textContent = `IQAMA: ${ACTIVE_WORKER.iqama} | 700: ${ACTIVE_WORKER.unified700}`;
+    }
+
+    function zoomQRCode() {
+      const qrCanvas = document.querySelector('#inspectorQrContainer canvas') || document.querySelector('#inspectorQrContainer img');
+      if (qrCanvas) {
+        document.getElementById('fullScreenImg').src = qrCanvas.src || qrCanvas.toDataURL();
+        document.getElementById('fullScreenLabel').textContent = 'OFFICIAL INSPECTION QR CODE';
+        document.getElementById('fullScreenViewer').classList.remove('hidden');
+      }
+    }
+
+    // إدارة الصور والوثائق المشفرة محلياً
+    function triggerDocUpload(inputId) {
+      document.getElementById(inputId).click();
+    }
+
+    function handleDocImage(event, key) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const maxDim = 1200;
+          let w = img.width;
+          let h = img.height;
+          if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
+          else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          const base64Compressed = canvas.toDataURL('image/jpeg', 0.82);
+
+          try {
+            localStorage.setItem(`worker_doc_${key}`, base64Compressed);
+            renderDocImage(key, base64Compressed);
+          } catch (err) {
+            alert('حجم الصورة كبير جداً، يرجى اختيار صورة أخرى.');
+          }
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function renderDocImage(key, base64) {
+      if (key === 'worker_photo') {
+        const photoEl = document.getElementById('workerPhotoImg');
+        const placeholder = document.getElementById('workerPhotoPlaceholder');
+        if (base64) {
+          photoEl.src = base64;
+          photoEl.classList.remove('hidden');
+          placeholder.classList.add('hidden');
+        }
+        return;
+      }
+
+      const imgEl = document.getElementById(`${key}Img`);
+      const placeholder = document.getElementById(`${key}Placeholder`);
+      const actions = document.getElementById(`${key}Actions`);
+      if (base64) {
+        imgEl.src = base64;
+        imgEl.classList.remove('hidden');
+        if (placeholder) placeholder.classList.add('hidden');
+        if (actions) actions.classList.remove('hidden');
+      } else {
+        imgEl.src = '';
+        imgEl.classList.add('hidden');
+        if (placeholder) placeholder.classList.remove('hidden');
+        if (actions) actions.classList.add('hidden');
+      }
+    }
+
+    function removeDocImage(key) {
+      if (confirm('هل تريد حذف هذه الوثيقة؟')) {
+        localStorage.removeItem(`worker_doc_${key}`);
+        renderDocImage(key, null);
+      }
+    }
+
+    function loadStoredImages() {
+      ['worker_photo', 'iqama', 'qiwa', 'pass', 'cchi'].forEach(key => {
+        const saved = localStorage.getItem(`worker_doc_${key}`);
+        if (saved) renderDocImage(key, saved);
+      });
+    }
+
+    function viewFullScreen(key) {
+      const saved = localStorage.getItem(`worker_doc_${key}`);
+      if (!saved) return;
+      document.getElementById('fullScreenImg').src = saved;
+      const titles = {
+        iqama: 'MUQEEM RESIDENCE ID | هوية مقيم',
+        qiwa: 'QIWA WORK PERMIT | رخصة العمل المعتمدة',
+        pass: 'PASSPORT | جواز السفر والتأشيرة',
+        cchi: 'CCHI HEALTH INSURANCE | بطاقة التأمين الطبي'
+      };
+      document.getElementById('fullScreenLabel').textContent = titles[key] || 'OFFICIAL DOCUMENT';
+      document.getElementById('fullScreenViewer').classList.remove('hidden');
+    }
+
+    function closeFullScreen() {
+      document.getElementById('fullScreenViewer').classList.add('hidden');
+    }
+
+    function copyData(text, msg) {
+      navigator.clipboard.writeText(text).then(() => alert(msg));
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadWorkerFromURL();
+      renderWorkerProfile();
+      loadStoredImages();
+    });
+  </script>
+</body>
+</html>
